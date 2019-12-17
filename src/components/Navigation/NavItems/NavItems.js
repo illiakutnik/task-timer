@@ -10,7 +10,7 @@ const Nav = styled.nav`
 
 const Ul = styled.ul`
 	display: flex;
-	flex-direction: ${props => (props.mobile ? 'column' : 'row')};
+	flex-direction: row;
 	align-items: center;
 	height: 100%;
 `
@@ -20,16 +20,16 @@ const NavItems = () => {
 	if (auth) {
 		links = (
 			<Ul>
-				<NavItem link='/'>Tasks</NavItem>
-				<NavItem link='/profile'>Profile</NavItem>
-				<NavItem link='/logout'>Logout</NavItem>
+				<NavItem link="/">Tasks</NavItem>
+				<NavItem link="/profile">Profile</NavItem>
+				<NavItem link="/logout">Logout</NavItem>
 			</Ul>
 		)
 	} else {
 		links = (
 			<Ul>
-				<NavItem link='/login'>Login</NavItem>
-				<NavItem link='/signup'>Signup</NavItem>
+				<NavItem link="/login">Login</NavItem>
+				<NavItem link="/signup">Signup</NavItem>
 			</Ul>
 		)
 	}

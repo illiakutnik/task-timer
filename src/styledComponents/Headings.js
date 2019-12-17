@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components/macro'
 
 const baseStyle = css`
 	color: ${({ color }) =>
-		color === 'white' ? 'var(--color-white)' : 'var(--color-main)'};
+		color === 'white' ? '#fff' : 'var(--color-main)'};
 	font-weight: ${({ bold }) => (bold ? '700' : '300')};
 	margin-top: 0;
 	letter-spacing: 1px;

@@ -4,7 +4,7 @@ import styled from 'styled-components/macro'
 import icon from './icon.png'
 
 const LogoWrapper = styled.div`
-	color: var(--color-white);
+	color: #fff;
 	font-size: 1.5rem;
 	padding: 1rem;
 	height: 100%;
@@ -15,13 +15,13 @@ const LogoWrapper = styled.div`
 const Icon = styled.img`
 	height: 100%;
 	filter: brightness(1000%);
-	margin-right: 5px;
+	margin-right: 1rem;
 `
 
 const Logo = () => {
 	return (
 		<LogoWrapper>
-			<Icon src={icon} alt='k' />
+			<Icon src={icon} alt="k" />
 			TASK TIMER
 		</LogoWrapper>
 	)

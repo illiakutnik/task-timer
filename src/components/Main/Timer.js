@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useFirestore, isLoaded } from 'react-redux-firebase'
-import { useSelector } from 'react-redux'
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { compose } from 'redux'
+import { withFirestore, isLoaded } from 'react-redux-firebase'
 import styled from 'styled-components/macro'
 import uuid from 'uuid'
 import { Formik, Form, Field } from 'formik'
@@ -14,12 +15,9 @@ const TimerWrapper = styled.div`
 	display: flex;
 	align-self: center;
 	flex-direction: column;
-	/* justify-content: center; */
 	align-items: center;
 	border-radius: 0.7rem;
-	background-color: var(--color-mainDark);
-	box-shadow: 0rem 0.5rem 3.5rem var(--shadow);
-	width: 50%;
+	width: 40%;
 `
 
 const StyledTimer = styled.div`
@@ -31,11 +29,12 @@ const StyledTimer = styled.div`
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	/* color: #fff; */
+	color: #fff;
+	box-shadow: 0 0 3.5rem var(--shadow);
 	background-color: var(--color-mainLighter);
 `
 const StyledForm = styled(Form)`
-	width: 70%;
+	width: 60%;
 `
 
 const ButtonWrapper = styled.div`
@@ -45,28 +44,129 @@ const ButtonWrapper = styled.div`
 `
 
 const TaskSchema = Yup.object().shape({
-	task: Yup.string().required('type name for task')
+	task: Yup.string().required('type some name for task')
 })
 
-const Timer = () => {
-	const firestore = useFirestore()
-	const userID = useSelector(state => state.firebase.auth.uid)
-	const tasks = useSelector(state => state.firestore.data.tasks)
-	const [time, setTime] = useState(0)
-	const [startTime, setStartTime] = useState(null)
-	const [isActive, setIsActive] = useState(false)
-	const [isStarted, setIsStarted] = useState(false)
-
-	const startClick = () => {
-		setStartTime(moment().unix())
-		setIsActive(true)
-		setIsStarted(true)
-	}
-	const pauseClick = () => {
-		setIsActive(!isActive)
+class Timer extends Component {
+	state = {
+		time: 0,
+		startTime: null,
+		isActive: false,
+		isStarted: false
 	}
 
-	const toHHMMSS = sec => {
+	componentDidMount() {
+		if (localStorage.getItem('ongoingTask') !== null) {
+			const task = JSON.parse(localStorage.getItem('ongoingTask'))
+			const time = task.timeLeave
+				? moment().unix() - task.timeLeave + task.time
+				: task.time
+			const activeStatus = task.timeLeave ? true : false
+			this.setState({
+				time: time,
+				startTime: task.startTime,
+				isStarted: true,
+				isActive: activeStatus
+			})
+			this.interval = setInterval(this.timerTik, 1000)
+		}
+		localStorage.removeItem('ongoingTask')
+		window.addEventListener('beforeunload', this.componentWillClose)
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.interval)
+		this.saveDataOnClose()
+		window.removeEventListener('beforeunload', this.componentWillClose)
+	}
+
+	componentWillClose = () => {
+		this.saveDataOnClose()
+	}
+
+	saveDataOnClose = () => {
+		const { time, isStarted, isActive, startTime } = this.state
+		if (isStarted) {
+			const ongoingTask = {
+				time,
+				startTime
+			}
+			if (isActive) {
+				ongoingTask.timeLeave = moment().unix()
+			}
+			try {
+				localStorage.setItem('ongoingTask', JSON.stringify(ongoingTask))
+			} catch (e) {
+				alert(e.message)
+			}
+		}
+	}
+
+	timerTik = () => {
+		if (this.state.isActive) {
+			this.setState(prevState => ({ time: prevState.time + 1 }))
+		}
+	}
+
+	startClick = () => {
+		this.setState({
+			startTime: moment().unix(),
+			isActive: true,
+			isStarted: true
+		})
+		this.interval = setInterval(this.timerTik, 1000)
+	}
+
+	pauseClick = () => {
+		this.setState(prevState => ({
+			isActive: !prevState.isActive
+		}))
+	}
+
+	stopClick = async (values, setSubmitting, resetForm) => {
+		const { tasks, firestore, userID } = this.props
+		const completeTask = {
+			id: uuid(),
+			time: this.state.time,
+			name: values.task,
+			timeStart: this.state.startTime,
+			timeEnd: moment().unix()
+		}
+		this.setState({
+			isActive: false
+		})
+		try {
+			if (isLoaded(tasks)) {
+				if (!tasks[userID]) {
+					await firestore
+						.collection('tasks')
+						.doc(userID)
+						.set({
+							tasks: [completeTask]
+						})
+				} else {
+					await firestore
+						.collection('tasks')
+						.doc(userID)
+						.update({
+							tasks: [...tasks[userID].tasks, completeTask]
+						})
+				}
+				resetForm()
+				clearInterval(this.interval)
+				this.setState({
+					time: 0,
+					isStarted: false
+				})
+			}
+		} catch (e) {
+			alert(e.message)
+		} finally {
+			setSubmitting(false)
+		}
+	}
+
+	toHHMMSS = sec => {
 		let secNum = parseInt(sec)
 		let hours = Math.floor(secNum / 3600)
 		let minutes = Math.floor(secNum / 60) % 60
@@ -74,134 +174,62 @@ const Timer = () => {
 		return [hours, minutes, seconds].map(x => (x < 10 ? `0${x}` : x)).join(':')
 	}
 
-	const stopClick = values => {
-		const completeTask = {
-			id: uuid(),
-			time: time,
-			name: values.task,
-			timeStart: startTime,
-			timeEnd: moment().unix()
-		}
-
-		if (isLoaded(tasks)) {
-			if (!tasks[userID]) {
-				firestore
-					.collection('tasks')
-					.doc(userID)
-					.set({
-						tasks: [completeTask]
-					})
-			} else {
-				firestore
-					.collection('tasks')
-					.doc(userID)
-					.update({
-						tasks: [...tasks[userID].tasks, completeTask]
-					})
-			}
-		}
-		setTime(0)
-		setIsActive(false)
-		setIsStarted(false)
+	render() {
+		return (
+			<TimerWrapper>
+				<StyledTimer>{this.toHHMMSS(this.state.time)}</StyledTimer>
+				<Formik
+					initialValues={{
+						task: ''
+					}}
+					validationSchema={TaskSchema}
+					onSubmit={(values, { resetForm, setSubmitting }) => {
+						this.stopClick(values, setSubmitting, resetForm)
+					}}
+				>
+					{({ isSubmitting }) => (
+						<StyledForm>
+							<Field
+								type="text"
+								name="task"
+								placeholder="name your task"
+								lightColor={true}
+								component={Input}
+							/>
+							<ButtonWrapper>
+								{!this.state.isStarted ? (
+									<Button contain type="button" onClick={this.startClick}>
+										Start
+									</Button>
+								) : (
+									<>
+										<Button contain type="button" onClick={this.pauseClick}>
+											Pause
+										</Button>
+										<Button
+											color="red"
+											contain
+											type="submit"
+											disabled={isSubmitting}
+											loading={isSubmitting ? 'Saving...' : null}
+										>
+											Stop
+										</Button>
+									</>
+								)}
+							</ButtonWrapper>
+						</StyledForm>
+					)}
+				</Formik>
+			</TimerWrapper>
+		)
 	}
-
-	// console.log(time)
-	useEffect(() => {
-		return () => {
-			// firestore
-			// 	.collection('tasks')
-			// 	.doc(userID)
-			// 	.update({
-			// 		ongoingTask: { time: time }
-			// 	})
-			// console.log(time)
-			// if (isLoaded(tasks)) {
-			// 	if (!tasks[userID]) {
-			// 		firestore
-			// 			.collection('tasks')
-			// 			.doc(userID)
-			// 			.set({
-			// 				ongoingTask: { time: time }
-			// 			})
-			// 	} else {
-			// 		firestore
-			// 			.collection('tasks')
-			// 			.doc(userID)
-			// 			.update({
-			// 				ongoingTask: { time: time }
-			// 			})
-			// 	}
-			// }
-		}
-	}, [time])
-
-	useEffect(() => {
-		let interval = null
-		if (isActive) {
-			interval = setInterval(() => {
-				setTime(prevState => prevState + 1)
-			}, 1000)
-		} else if (!isActive && time !== 0) {
-			clearInterval(interval)
-		}
-		return () => {
-			// console.log(startTime)
-			// firestore
-			// 	.collection('tasks')
-			// 	.doc(userID)
-			// 	.update({
-			// 		ongoingTask: {
-			// 			time: time,
-			// 			start: startTime,
-			// 			unMount: moment().unix(),
-			// 			dif: moment().unix() - startTime
-			// 		}
-			// 	})
-
-			clearInterval(interval)
-		}
-	}, [isActive, time])
-	return (
-		<TimerWrapper>
-			<StyledTimer>{toHHMMSS(time)}</StyledTimer>
-			<Formik
-				initialValues={{
-					task: ''
-				}}
-				validationSchema={TaskSchema}
-				onSubmit={(values, { setSubmitting }) => {
-					stopClick(values)
-				}}
-			>
-				{(isSubmitting, isValid) => (
-					<StyledForm>
-						<Field
-							type='text'
-							name='task'
-							placeholder='name your task'
-							component={Input}
-						/>
-						<ButtonWrapper>
-							{!isStarted ? (
-								<Button contain type='button' onClick={startClick}>
-									Start
-								</Button>
-							) : (
-								<>
-									<Button contain type='button' onClick={pauseClick}>
-										Pause
-									</Button>
-									<Button color='red' contain type='submit'>
-										Stop
-									</Button>
-								</>
-							)}
-						</ButtonWrapper>
-					</StyledForm>
-				)}
-			</Formik>
-		</TimerWrapper>
-	)
 }
 
-export default Timer
+export default compose(
+	withFirestore,
+	connect(state => ({
+		tasks: state.firestore.data.tasks,
+		userID: state.firebase.auth.uid
+	}))
+)(Timer)

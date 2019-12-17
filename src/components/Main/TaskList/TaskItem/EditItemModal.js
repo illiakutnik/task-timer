@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Formik, Form, Field } from 'formik'
 import styled from 'styled-components/macro'
 import * as Yup from 'yup'
@@ -21,16 +21,10 @@ const TaskSchema = Yup.object().shape({
 	task: Yup.string().required('type some name for task')
 })
 
-const EditItemModal = ({ open, close, name }) => {
-	const changeName = (values, setSubmitting) => {
-		if (name !== values.task) {
-			console.log('changed')
-		}
-	}
-
+const EditItemModal = ({ open, close, name, editItem, id }) => {
 	return (
 		<Modal opened={open} close={close} changeMode={true}>
-			<Heading bold size='h2' color='white'>
+			<Heading bold size="h2" color="white">
 				You can change the name of task
 			</Heading>
 			<Formik
@@ -38,35 +32,35 @@ const EditItemModal = ({ open, close, name }) => {
 					task: name
 				}}
 				validationSchema={TaskSchema}
-				onSubmit={(values, { setSubmitting }) => {
-					changeName(values, setSubmitting)
-					console.log('submit')
+				onSubmit={async (values, { setSubmitting }) => {
+					await editItem(id, values.task, setSubmitting)
+					close()
 				}}
 			>
-				{({ isSubmitting, isValid, resetForm }) => (
+				{({ isSubmitting, isValid, values, setValues }) => (
 					<StyledForm>
 						<Field
-							type='text'
-							name='task'
+							type="text"
+							name="task"
 							lightColor={true}
 							component={Input}
 						/>
 						<ButtonWrapper>
 							<Button
 								contain
-								type='button'
+								type="button"
 								onClick={() => {
 									close()
-									resetForm()
+									setValues({ task: name })
 								}}
 							>
 								Close
 							</Button>
 							<Button
-								color='red'
+								color="red"
 								contain
-								type='submit'
-								disabled={isSubmitting || !isValid}
+								type="submit"
+								disabled={isSubmitting || !isValid || values.task === name}
 								loading={isSubmitting ? 'Saving...' : null}
 							>
 								Save

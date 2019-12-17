@@ -25,10 +25,6 @@ const LogIn = () => {
 			await firebase
 				.auth()
 				.signInWithEmailAndPassword(values.email, values.password)
-			// firebase.login({
-			// 	email: values.email,
-			// 	password: values.password
-			// })
 		} catch (e) {
 			error = e
 			setSubmitting(false)
@@ -47,29 +43,29 @@ const LogIn = () => {
 		>
 			{({ isSubmitting, isValid }) => (
 				<FormWrapper>
-					<Heading size='h1' color='white'>
+					<Heading size="h1" color="white">
 						Login in your account
 					</Heading>
-					<Heading size='h4' bold color='white'>
+					<Heading size="h4" bold color="white">
 						Fill in your details to login into your account
 					</Heading>
 					<StyledForm>
 						<Field
-							type='email'
-							name='email'
-							placeholder='Your email'
+							type="email"
+							name="email"
+							placeholder="Your email"
 							component={Input}
 						/>
 						<Field
-							type='password'
-							name='password'
-							placeholder='Your password'
+							type="password"
+							name="password"
+							placeholder="Your password"
 							component={Input}
 						/>
 						<Button
 							disabled={!isValid || isSubmitting}
 							loading={isSubmitting ? 'Logging in...' : null}
-							type='submit'
+							type="submit"
 						>
 							Login
 						</Button>

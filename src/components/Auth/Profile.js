@@ -71,18 +71,21 @@ const Profile = () => {
 	const editProfile = async (values, setSubmitting) => {
 		const user = firebase.auth().currentUser
 		const { uid: userId, email: userEmail } = firebaseState.auth
+		const { firstName, lastName } = firebaseState.profile
 		try {
 			if (values.email !== userEmail) {
 				await user.updateEmail(values.email)
 			}
 
-			await firestore.set(
-				{ collection: 'users', doc: userId },
-				{
-					firstName: values.firstName,
-					lastName: values.lastName
-				}
-			)
+			if (values.firstName !== firstName || values.lastName !== lastName) {
+				await firestore.set(
+					{ collection: 'users', doc: userId },
+					{
+						firstName: values.firstName,
+						lastName: values.lastName
+					}
+				)
+			}
 
 			if (values.password) {
 				await user.updatePassword(values.password)
@@ -101,13 +104,42 @@ const Profile = () => {
 		const uid = firebaseState.auth.uid
 		try {
 			await firestore.delete({ collection: 'users', doc: uid })
+			await firestore.delete({ collection: 'tasks', doc: uid })
 			await user.delete()
 		} catch (e) {
 			setDeleteError(e.message)
 			setDeleteRequest(false)
 		}
 	}
-	console.log(error)
+
+	const deleteModal = () => {
+		if (modalOpened) {
+			return (
+				<Modal opened={modalOpened} close={() => setModalOpened(false)}>
+					<Heading bold size="h2" color="white">
+						Do you really want to delete your account?
+					</Heading>
+					<ButtonsWrapper>
+						<Button
+							contain
+							onClick={() => deleteUser()}
+							color="red"
+							disabled={deleteRequest}
+							loading={deleteRequest ? 'Deleting...' : null}
+						>
+							Delete
+						</Button>
+						<Button color="main" contain onClick={() => setModalOpened(false)}>
+							Cancel
+						</Button>
+					</ButtonsWrapper>
+					<Message error show={deleteError}>
+						{deleteError}
+					</Message>
+				</Modal>
+			)
+		} else return null
+	}
 
 	if (!firebaseState.profile.isLoaded) return null
 
@@ -128,47 +160,47 @@ const Profile = () => {
 			>
 				{({ isSubmitting, isValid }) => (
 					<FormWrapper>
-						<Heading size='h1' color='white'>
+						<Heading size="h1" color="white">
 							Edit your profile
 						</Heading>
-						<Heading bold size='h4' color='white'>
+						<Heading bold size="h4" color="white">
 							Here you can edit your profile
 						</Heading>
 						<StyledForm>
 							<Field
-								type='text'
-								name='firstName'
-								placeholder='Your first name...'
+								type="text"
+								name="firstName"
+								placeholder="Your first name..."
 								component={Input}
 							/>
 							<Field
-								type='text'
-								name='lastName'
-								placeholder='Your last name...'
+								type="text"
+								name="lastName"
+								placeholder="Your last name..."
 								component={Input}
 							/>
 							<Field
-								type='email'
-								name='email'
-								placeholder='Your email...'
+								type="email"
+								name="email"
+								placeholder="Your email..."
 								component={Input}
 							/>
 							<Field
-								type='password'
-								name='password'
-								placeholder='Your password...'
+								type="password"
+								name="password"
+								placeholder="Your password..."
 								component={Input}
 							/>
 							<Field
-								type='password'
-								name='confirmPassword'
-								placeholder='Re-type your password...'
+								type="password"
+								name="confirmPassword"
+								placeholder="Re-type your password..."
 								component={Input}
 							/>
 							<Button
 								disabled={!isValid || isSubmitting}
 								loading={isSubmitting ? 'Editing...' : null}
-								type='submit'
+								type="submit"
 							>
 								Edit
 							</Button>
@@ -185,28 +217,7 @@ const Profile = () => {
 					</FormWrapper>
 				)}
 			</Formik>
-			<Modal opened={modalOpened} close={() => setModalOpened(false)}>
-				<Heading bold size='h2' color='white'>
-					Do you really want to delete your account?
-				</Heading>
-				<ButtonsWrapper>
-					<Button
-						contain
-						onClick={() => deleteUser()}
-						color='red'
-						disabled={deleteRequest}
-						loading={deleteRequest ? 'Deleting...' : null}
-					>
-						Delete
-					</Button>
-					<Button color='main' contain onClick={() => setModalOpened(false)}>
-						Cancel
-					</Button>
-				</ButtonsWrapper>
-				<Message error show={deleteError}>
-					{deleteError}
-				</Message>
-			</Modal>
+			{deleteModal()}
 		</>
 	)
 }

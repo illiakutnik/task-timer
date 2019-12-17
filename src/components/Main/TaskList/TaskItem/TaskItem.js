@@ -75,9 +75,21 @@ const convertTime = sec => {
 	}
 }
 
-const TaskItem = ({ task, deleteItem, index }) => {
+const TaskItem = ({ task, deleteItem, index, editItem }) => {
 	const [editing, setEditing] = useState(false)
-	// console.log(editing)
+	const editModal = () => {
+		if (editing) {
+			return (
+				<EditItemModal
+					name={task.name}
+					id={task.id}
+					open={editing}
+					editItem={editItem}
+					close={() => setEditing(false)}
+				/>
+			)
+		} else return null
+	}
 	return (
 		<>
 			<TableRow>
@@ -97,11 +109,7 @@ const TaskItem = ({ task, deleteItem, index }) => {
 					</IconButton>
 				</td>
 			</TableRow>
-			<EditItemModal
-				name={task.name}
-				open={editing}
-				close={() => setEditing(false)}
-			></EditItemModal>
+			{editModal()}
 		</>
 	)
 }

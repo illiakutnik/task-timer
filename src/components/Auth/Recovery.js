@@ -38,28 +38,27 @@ const Recovery = () => {
 			validationSchema={RecoverSchema}
 			onSubmit={(values, { setSubmitting }) => {
 				recoverPassword(values, setSubmitting)
-				// setSubmitting(false)
 			}}
 		>
 			{({ isSubmitting, isValid }) => (
 				<FormWrapper>
-					<Heading noMargin size='h1' color='white'>
+					<Heading noMargin size="h1" color="white">
 						Recover password
 					</Heading>
-					<Heading size='h4' bold color='white'>
+					<Heading size="h4" bold color="white">
 						Type in your e-mail to recover your password
 					</Heading>
 					<StyledForm>
 						<Field
-							type='email'
-							name='email'
-							placeholder='Type your email...'
+							type="email"
+							name="email"
+							placeholder="Type your email..."
 							component={Input}
 						/>
 						<Button
 							disabled={!isValid || isSubmitting}
 							loading={isSubmitting ? 'Sending recover email...' : null}
-							type='submit'
+							type="submit"
 						>
 							Send
 						</Button>

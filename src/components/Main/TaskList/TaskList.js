@@ -9,6 +9,8 @@ import {
 import styled from 'styled-components/macro'
 
 import TaskItem from './TaskItem/TaskItem'
+import Loader from '../../../styledComponents/Loader'
+import Heading from '../../../styledComponents/Headings'
 
 const StyledTable = styled.table`
 	border-collapse: collapse;
@@ -27,15 +29,18 @@ const StyledTable = styled.table`
 		padding: 1.5rem;
 	}
 `
+const TextContainer = styled.div`
+	margin-top: 2rem;
+	width: 100%;
+	text-align: center;
+`
 
 const TaskList = () => {
 	const firestore = useFirestore()
 	const tasks = useSelector(state => state.firestore.data.tasks)
+	const orderedTasks = useSelector(state => state.firestore.ordered.tasks)
 	const userID = useSelector(state => state.firebase.auth.uid)
 	useFirestoreConnect([{ collection: 'tasks', doc: userID }])
-
-	const tasks2 = useSelector(state => state.firestore.ordered.tasks)
-	// console.log(tasks2[userID])
 
 	const deleteItem = id => {
 		try {
@@ -49,12 +54,37 @@ const TaskList = () => {
 			alert(e.message)
 		}
 	}
+	const editItem = async (id, newName, setSubmitting) => {
+		const newTasks = tasks[userID].tasks
+		const index = newTasks.findIndex(item => item.id === id)
+		newTasks[index].name = newName
+		try {
+			await firestore
+				.collection('tasks')
+				.doc(userID)
+				.update({
+					tasks: newTasks
+				})
+		} catch (e) {
+			alert(e.message)
+		} finally {
+			setSubmitting(false)
+		}
+	}
 
 	if (!isLoaded(tasks)) {
-		return 'Loading...'
-	} else if (isEmpty(tasks[userID])) {
-		return "you don't have any tasks yet"
+		return <Loader />
+	} else if (isEmpty(tasks[userID]) || isEmpty(tasks[userID].tasks)) {
+		return (
+			<TextContainer>
+				<Heading bold size="h2">
+					You don't have any tracked tasks yet. Click start to add your first
+					one
+				</Heading>
+			</TextContainer>
+		)
 	} else {
+		const listOfTasks = orderedTasks[0].tasks.slice(0).reverse()
 		return (
 			<StyledTable>
 				<thead>
@@ -69,12 +99,13 @@ const TaskList = () => {
 					</tr>
 				</thead>
 				<tbody>
-					{tasks[userID].tasks.map((task, i) => (
+					{listOfTasks.map((task, i) => (
 						<TaskItem
 							key={task.id}
 							index={i + 1}
 							task={task}
 							deleteItem={deleteItem}
+							editItem={editItem}
 						/>
 					))}
 				</tbody>

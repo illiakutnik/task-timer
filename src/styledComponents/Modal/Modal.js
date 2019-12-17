@@ -22,7 +22,6 @@ const WrappedModal = styled.div`
 	max-width: 50rem;
 	box-shadow: 0 0.5rem 3.5em var(--shadow);
 	border-radius: 1rem;
-	/* background-color: var(--color-mainLighter); */
 	background-color: ${({ changeMode }) =>
 		changeMode ? 'var(--color-main)' : 'var(--color-mainLighter)'};
 	transition: all 0.3s;

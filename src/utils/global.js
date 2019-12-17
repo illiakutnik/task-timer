@@ -23,17 +23,8 @@ export default createGlobalStyle`
     --color-mainLight: ${props => props.theme.colors.mainLight};
     --color-mainLighter: ${props => props.theme.colors.mainLighter};
     --color-mainPale: ${props => props.theme.colors.mainPale};
-
-    --color-text: ${props => props.theme.colors.textColor};
-    --color-white: ${props => props.theme.colors.whiteColor};
     --color-errorRed: ${props => props.theme.colors.errorRed};
     --shadow: ${props => props.theme.colors.shadow};
-    /* @media ${props => props.theme.mediaQueries.small} {
-      font-size: 60%;
-    }
-    @media ${props => props.theme.mediaQueries.smallest} {
-      font-size: 55%;
-    } */
   }
   body {
     font-family: 'Roboto', sans-serif;
